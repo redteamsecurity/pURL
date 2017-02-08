@@ -1,0 +1,1 @@
+GET	https://slack.com/api/auth.test	token=xxxx-xxxx-xxxx-xxxx	Content-Type:text/html	x-api-key:12345678GET	https://slack.com/api/bots.info	token=xxxx-xxxx-xxxx-xxxx	Content-Type:text/html	x-api-key:12345678GET	https://slack.com/api/chat.postMessage	token=xxxx-xxxx-xxxx-xxxx&channel=123456&text=test%20input	Content-Type:text/html	x-api-key:12345678
