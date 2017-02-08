@@ -2,14 +2,6 @@ import requests
 import sys
 import getopt
 
-URL = ""
-data = ""
-method = ""
-header = ""
-proxyDict = {}
-header_dict = {}
-safe = True
-verbose = False
 
 def usage():
     print "usage: pURL.py -u <url> -m <request method> -x X-API-KEY: 1234 -d <request body>"
@@ -26,41 +18,38 @@ def usage():
     sys.exit()
 
 
-def setProxy(a):
-    global proxyDict
+def setProxy(proxy):
+    proxyDict = {}
     # set the proxy location based on user input
-    proxyDict['http'] = a
-    proxyDict['https'] = a
-    proxyDict['ftp'] = a
+    proxyDict['http'] = proxy
+    proxyDict['https'] = proxy
+    proxyDict['ftp'] = proxy
+    return proxyDict
 
 
-def configHeader(a):
-    global header_dict
+def configHeader(headerInfo):
+    header_dict = {}
     # use this method to append multiple headers to the request.
-    a = a.strip()
-    head, value = a.split(":")
+    headerInfo = headerInfo.strip()
+    head, value = headerInfo.split(":")
     header_dict[head] = value
+    return header_dict
 
 
-def assembleRequest():
+def assembleRequest(data, method, URL, safe, headerDict, proxyDict, verbose):
 
-    global data
-    global method
-    global safe
-    global header_dict
-    global proxyDict
-    global verbose
+
     # connect to the API endpoint, and send the data that was given
     # note the response variable will hold all of the information received back from the server
     try:
         if method == "GET":
-            response = requests.get(URL, data, headers=header_dict,proxies=proxyDict, verify=safe)
+            response = requests.get(URL, data, headers=headerDict,proxies=proxyDict, verify=safe)
         elif method == "POST":
-            response = requests.post(URL, data, headers=header_dict, verify=safe, proxies=proxyDict)
+            response = requests.post(URL, data, headers=headerDict, verify=safe, proxies=proxyDict)
         elif method == "PUT":
-            response = requests.put(URL, data, headers=header_dict, verify=safe, proxies=proxyDict)
+            response = requests.put(URL, data, headers=headerDict, verify=safe, proxies=proxyDict)
         elif method == "DELETE":
-            response = requests.delete(URL, headers=header_dict, verify=safe, proxies=proxyDict)
+            response = requests.delete(URL, headers=headerDict, verify=safe, proxies=proxyDict)
         elif method == "OPTIONS":
             response = requests.options(URL, verify=safe, proxies=proxyDict)
         elif method == "HEAD":
@@ -101,21 +90,22 @@ def assembleRequest():
         sys.exit(1)
 
 
-def parseFile(infile):
+def parseFile(infile, safe, verbose):
     # open the file to read contents
     infile = open(infile)
     # loop through each line of the file, read values
     for line in infile:
         data = line.split("\t")
         # this will take the input values and start assigning to the different pieces of the request
-        parseInput(data)
+        parseInput(data, safe, verbose)
     infile.close()
 
-def parseInput(request):
-    global method
-    global URL
-    global data
-    global header_dict
+
+def parseInput(request, safe, verbose):
+    URL = ""
+    data = ""
+    method = ""
+    headerDict = {}
 
     # walk through the request and assign each piece of information to a variable
     i = 0
@@ -131,25 +121,25 @@ def parseInput(request):
                 # loop until there are no more headers to add
                 while i < len(request):
                     head, value = request[i].split(":")
-                    header_dict[head] = value.strip('\n')
+                    headerDict[head] = value.strip('\n')
                     i += 1
-                assembleRequest()
+                assembleRequest(data, method, URL, safe, headerDict, proxyDict, verbose)
         else:
             pass
     except:
         print "Something went wrong while making the request. Please review the input file for any errors"
 
 
-def main():
-    global URL
-    global data
-    global method
-    global header
-    global safe
-    global header_dict
-    global proxyDict
-    global verbose
-    infile= ""
+if __name__=="__main__":
+    URL = ""
+    data = ""
+    method = ""
+    header = ""
+    proxyDict = {}
+    headerDict = {}
+    safe = True
+    verbose = False
+    infile = ""
 
     if not len(sys.argv[1:]):
         print "no options specified"
@@ -170,12 +160,12 @@ def main():
             elif o in ("-m"):
                 method = a
             elif o in ("-x"):
-                configHeader(a)
+                headerDict = configHeader(a)
             elif o in ("-h","--help"):
                 usage()
                 sys.exit()
             elif o in ("-p","--proxy"):
-                setProxy(a)
+               proxyDict = setProxy(a)
             elif o in ("--unsafe"):
                 safe = False
             elif o in ("-v"):
@@ -190,8 +180,8 @@ def main():
 
     # This will assemble all variables to submit the requests.
     if infile != "":
-        parseFile(infile)
+        parseFile(infile, safe, verbose)
     else:
-        assembleRequest()
+        assembleRequest(data, method, safe, headerDict, proxyDict, verbose)
 
-main()
+# main()
